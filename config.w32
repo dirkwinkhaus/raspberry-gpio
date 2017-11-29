@@ -1,0 +1,7 @@
+ARG_ENABLE('widigpio', 'widigpio support', 'no');
+
+if (PHP_WIDIGPIO != 'no') {
+	AC_DEFINE('HAVE_WIDIGPIO', 1, 'widigpio support enabled');
+
+	EXTENSION('widigpio', 'widigpio.c', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
+}
