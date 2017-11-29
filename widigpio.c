@@ -226,12 +226,10 @@ PHP_FUNCTION(gpio_onewire_slave_value)
 	
 	fd = open(path, O_RDONLY);
 	if (-1 == fd) {
-		fprintf(stderr, "Failed to open w1 bus master!\n");
 		RETURN_NULL();
 	}
  
 	if (-1 == read(fd, input_string, 1024)) {
-		fprintf(stderr, "cannot read bus master!\n");
 		RETURN_NULL();
 	}
 	
