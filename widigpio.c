@@ -15,11 +15,13 @@
 #include <unistd.h>
 #include <string.h>
 
-/* {{{ void gpio_export(int port, bool export)
+zend_class_entry *gpio_ce;
+
+/* {{{ void setExport(int port, bool export)
  */
-PHP_FUNCTION(gpio_export)
+PHP_METHOD(Gpio, setExport)
 {
-    long port;
+    zend_long port;
     int fd;
     zend_bool export;
     ssize_t bytes_written;
@@ -31,12 +33,10 @@ PHP_FUNCTION(gpio_export)
       Z_PARAM_BOOL(export)
     ZEND_PARSE_PARAMETERS_END();
 	
-	memset(file_name, 0, sizeof(file_name));	
-	
 	if (export) {
-		strcat(file_name, "/sys/class/gpio/export");
+		strcpy(file_name, "/sys/class/gpio/export");
 	} else {
-		strcat(file_name, "/sys/class/gpio/unexport");
+		strcpy(file_name, "/sys/class/gpio/unexport");
 	}
 	
 	fd = open(file_name, O_WRONLY);
@@ -44,7 +44,7 @@ PHP_FUNCTION(gpio_export)
     	RETURN_FALSE;
 	}
  
-	bytes_written = snprintf(buffer, 3, "%ld", port);
+	bytes_written = snprintf(buffer, 3, "%pd", port);
 	
 	if (-1 == write(fd, buffer, bytes_written)) {
 		RETURN_FALSE;	
@@ -56,11 +56,11 @@ PHP_FUNCTION(gpio_export)
 }
 /* }}} */
 
-/* {{{ bool gpio_direction( int $port, bool $direction )
+/* {{{ bool setDirection( int $port, bool $direction )
  */
-PHP_FUNCTION(gpio_direction)
+PHP_METHOD(Gpio, setDirection)
 {
-	long port;
+	zend_long port;
 	zend_bool direction;
 	char direction_str[3];
  	char path[35];
@@ -71,7 +71,9 @@ PHP_FUNCTION(gpio_direction)
       Z_PARAM_BOOL(direction)
     ZEND_PARSE_PARAMETERS_END();
 	
-	snprintf(path, 35, "/sys/class/gpio/gpio%ld/direction", port);
+	snprintf(path, 35, "/sys/class/gpio/gpio%pd/direction", port);
+	printf("%s", path);
+	printf("\n");
 	
 	fd = open(path, O_WRONLY);
 	if (-1 == fd) {
@@ -79,10 +81,12 @@ PHP_FUNCTION(gpio_direction)
 	}
 	
 	if (direction) {
-		strcat(direction_str, "out");
+		strcpy(direction_str, "out");
 	} else {
-		strcat(direction_str, "in");
+		strcpy(direction_str, "in");
 	}
+	
+	printf("%s", direction_str);
  
 	if (-1 == write(fd, direction_str, strlen(direction_str))) {
 		RETURN_FALSE;
@@ -94,11 +98,11 @@ PHP_FUNCTION(gpio_direction)
 }
 /* }}}*/
 
-/* {{{ bool gpio_set( int $port, bool $set )
+/* {{{ bool setIo( int $port, bool $set )
  */
-PHP_FUNCTION(gpio_set)
+PHP_METHOD(Gpio, setIo)
 {
-	long port;
+	zend_long port;
 	zend_bool set;
 	char path[35];
 	char set_str[1];
@@ -109,22 +113,20 @@ PHP_FUNCTION(gpio_set)
       Z_PARAM_BOOL(set)
     ZEND_PARSE_PARAMETERS_END();
  
-	snprintf(path, 35, "/sys/class/gpio/gpio%ld/value", port);
+	snprintf(path, 35, "/sys/class/gpio/gpio%pd/value", port);
 	
 	fd = open(path, O_WRONLY);
 	if (-1 == fd) {
-		fprintf(stderr, "Failed to open gpio value for writing!\n");
 		RETURN_FALSE;
 	}
 	
 	if (set) {
-		strcat(set_str, "1");
+		strcpy(set_str, "1");
 	} else {
-		strcat(set_str, "0");
+		strcpy(set_str, "0");
 	}
  
 	if (1 != write(fd, set_str, 1)) {
-		fprintf(stderr, "Failed to write value!\n");
 		RETURN_FALSE;
 	}
  
@@ -134,11 +136,11 @@ PHP_FUNCTION(gpio_set)
 }
 /* }}}*/
 
-/* {{{ bool gpio_get( int $port )
+/* {{{ bool getIo( int $port )
  */
-PHP_FUNCTION(gpio_get)
+PHP_METHOD(Gpio, getIo)
 {
-	long port;
+	zend_long port;
 	char path[35];
 	char input[1];
 	int fd;
@@ -147,16 +149,14 @@ PHP_FUNCTION(gpio_get)
       Z_PARAM_LONG(port)
     ZEND_PARSE_PARAMETERS_END();
  
-	snprintf(path, 35, "/sys/class/gpio/gpio%ld/value", port);
+	snprintf(path, 35, "/sys/class/gpio/gpio%pd/value", port);
 	
 	fd = open(path, O_RDONLY);
 	if (-1 == fd) {
-		fprintf(stderr, "Failed to open gpio value for reading!\n");
 		RETURN_NULL();
 	}
  
 	if (-1 == read(fd, input, 1)) {
-		fprintf(stderr, "Failed to read value!\n");
 		RETURN_NULL();
 	}
 
@@ -170,9 +170,9 @@ PHP_FUNCTION(gpio_get)
 }
 /* }}}*/
 
-/* {{{ bool gpio_onewire_slaves_list( )
+/* {{{ bool getOneWireDeviceList( )
  */
-PHP_FUNCTION(gpio_onewire_slaves_list)
+PHP_METHOD(Gpio, getOneWireDeviceList)
 {
     char input_string[1024];
     char *part_string;
@@ -183,12 +183,10 @@ PHP_FUNCTION(gpio_onewire_slaves_list)
 	
 	fd = open("/sys/bus/w1/devices/w1_bus_master1/w1_master_slaves", O_RDONLY);
 	if (-1 == fd) {
-		fprintf(stderr, "Failed to open w1 bus master!\n");
 		RETURN_NULL();
 	}
  
 	if (-1 == read(fd, input_string, 1024)) {
-		fprintf(stderr, "cannot read bus master!\n");
 		RETURN_NULL();
 	}
 
@@ -206,9 +204,9 @@ PHP_FUNCTION(gpio_onewire_slaves_list)
 }
 /* }}}*/
 
-/* {{{ int gpio_onewire_slave_value( string deviceName )
+/* {{{ int getOneWireDeviceValue( string deviceName )
  */
-PHP_FUNCTION(gpio_onewire_slave_value)
+PHP_METHOD(Gpio, getOneWireDeviceValue)
 {
 	char *device_name;
 	size_t device_name_len;
@@ -297,15 +295,25 @@ ZEND_END_ARG_INFO()
 /* {{{ widigpio_functions[]
  */
 const zend_function_entry widigpio_functions[] = {
-	PHP_FE(gpio_export,	arginfo_gpio_export)
-	PHP_FE(gpio_direction, arginfo_gpio_direction)
-	PHP_FE(gpio_set, arginfo_gpio_set)
-	PHP_FE(gpio_get, arginfo_gpio_get)
-	PHP_FE(gpio_onewire_slaves_list, arginfo_gpio_onewire_slaves_list)
-	PHP_FE(gpio_onewire_slave_value, arginfo_gpio_onewire_slave_value)
+	PHP_ME(Gpio, setExport,	arginfo_gpio_export, ZEND_ACC_PUBLIC)
+	PHP_ME(Gpio, setDirection, arginfo_gpio_direction, ZEND_ACC_PUBLIC)
+	PHP_ME(Gpio, setIo, arginfo_gpio_set, ZEND_ACC_PUBLIC)
+	PHP_ME(Gpio, getIo, arginfo_gpio_get, ZEND_ACC_PUBLIC)
+	PHP_ME(Gpio, getOneWireDeviceList, arginfo_gpio_onewire_slaves_list, ZEND_ACC_PUBLIC)
+	PHP_ME(Gpio, getOneWireDeviceValue, arginfo_gpio_onewire_slave_value, ZEND_ACC_PUBLIC)
 	PHP_FE_END
 };
 /* }}} */
+
+PHP_MINIT_FUNCTION(widigpio)
+{
+    zend_class_entry tmp_ce;
+    INIT_CLASS_ENTRY(tmp_ce, "Gpio", widigpio_functions);
+
+    gpio_ce = zend_register_internal_class(&tmp_ce TSRMLS_CC);
+
+    return SUCCESS;
+}
 
 /* {{{ widigpio_module_entry
  */
@@ -313,11 +321,11 @@ zend_module_entry widigpio_module_entry = {
 	STANDARD_MODULE_HEADER,
 	"widigpio",					/* Extension name */
 	widigpio_functions,			/* zend_function_entry */
-	NULL,							/* PHP_MINIT - Module initialization */
-	NULL,							/* PHP_MSHUTDOWN - Module shutdown */
-	PHP_RINIT(widigpio),			/* PHP_RINIT - Request initialization */
-	NULL,							/* PHP_RSHUTDOWN - Request shutdown */
-	PHP_MINFO(widigpio),			/* PHP_MINFO - Module info */
+	PHP_MINIT(widigpio),		/* PHP_MINIT - Module initialization */
+	NULL,						/* PHP_MSHUTDOWN - Module shutdown */
+	PHP_RINIT(widigpio),		/* PHP_RINIT - Request initialization */
+	NULL,						/* PHP_RSHUTDOWN - Request shutdown */
+	PHP_MINFO(widigpio),		/* PHP_MINFO - Module info */
 	PHP_WIDIGPIO_VERSION,		/* Version */
 	STANDARD_MODULE_PROPERTIES
 };
