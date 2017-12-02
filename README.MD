@@ -1,5 +1,11 @@
-# widigpio PHP Extension
+# widigpio a Raspberry Pi Gpio PHP Extension
 This extensions provides several functions to get control of gpios from within php.
+
+Supports:
+- export
+- digital get and set
+- get w1 bus clients
+- read w1 client value
 
 ## Installation
 	
