@@ -1,5 +1,5 @@
 # widigpio a Raspberry Pi Gpio PHP Extension
-This extensions provides several functions to get control of gpios from within php.
+This extensions provides the Gpio object to get control of gpios from within php. Export and digital functions need root privileges, the "one-wire" bus does not.
 
 Supports:
 - export
@@ -18,42 +18,38 @@ Supports:
 	tell php to load the module
 
 ## Sample
-
-	// export gpio3
-	gpio_export(3, true);
-	// set gpio3 output mode
-	gpio_direction(3, true);
 	
-	// export gpio17
-	gpio_export(17, true);
-	// set gpio17 iinput mode
-	gpio_direction(17, false);
+	<?php
 
-	// blink gpio3 3 times
+	echo 'TEST GPIO EXT' . PHP_EOL;
+
+	$gpio = new Gpio();
+
+	echo 'set export' . PHP_EOL;
+	$gpio->setExport(24, false);
+	$gpio->setExport(27, false);
+	var_dump($gpio->setExport(24, true));
+	var_dump($gpio->setExport(27, true));
+
+	echo 'set direction' . PHP_EOL;
+	var_dump($gpio->setDirection(27, true));
+	var_dump($gpio->setDirection(24,false));
+
+	echo 'get' . PHP_EOL;
+	var_dump($gpio->getIo(24));
+
 	for ($i = 0  ; $i < 3; $i++) {
-		gpio_set(3, true);
+  		$gpio->setIo(27, true);
+  		sleep(1);
+  		$gpio->setIo(27, false);
 		sleep(1);
-		gpio_set(3,false);
-		sleep(1);
-	}	
-	
-	echo 'gpio17 level is ';
-	if (gpio_get(17)) {
-		echo 'high'; 
-	} else {
-		echo 'low'; 
 	}
-	echo PHP_EOL;
-	
-	// sample of 3 18b20 temperature sensors on one wire bus
-	// this list contains the sensor ids
-	$deviceList = gpio_onewire_slaves_list();
+
+	$deviceList = $gpio->getOneWireDeviceList();
 	$device1 = $deviceList[0];
 	$device2 = $deviceList[1];
 	$device3 = $deviceList[2];
 
-	// output of every sensors temperature as integer in micro degrees
-	echo 'Selected device: ' . $device1 . ', value: ' . gpio_onewire_slave_value($device1) . PHP_EOL;
-	echo 'Selected device: ' . $device2 . ', value: ' . gpio_onewire_slave_value($device2) . PHP_EOL;
-	echo 'Selected device: ' . $device3 . ', value: ' . gpio_onewire_slave_value($device3) . PHP_EOL;
-	echo PHP_EOL;
+	echo 'Selected device: ' . $device1 . ', value: ' . $gpio->getOneWireDeviceValue($device1) . PHP_EOL;
+	echo 'Selected device: ' . $device2 . ', value: ' . $gpio->getOneWireDeviceValue($device2) . PHP_EOL;
+	echo 'Selected device: ' . $device3 . ', value: ' . $gpio->getOneWireDeviceValue($device3) . PHP_EOL;
