@@ -63,7 +63,7 @@ PHP_METHOD(Gpio, setDirection)
     zend_long port;
     zend_bool direction;
     char direction_str[3];
-     char path[35];
+    char path[35];
     int fd;
 
     ZEND_PARSE_PARAMETERS_START(2, 2)
@@ -317,14 +317,14 @@ PHP_MINIT_FUNCTION(widigpio)
  */
 zend_module_entry widigpio_module_entry = {
     STANDARD_MODULE_HEADER,
-    "widigpio",                    /* Extension name */
-    widigpio_functions,            /* zend_function_entry */
+    "widigpio",                 /* Extension name */
+    widigpio_functions,         /* zend_function_entry */
     PHP_MINIT(widigpio),        /* PHP_MINIT - Module initialization */
-    NULL,                        /* PHP_MSHUTDOWN - Module shutdown */
+    NULL,                       /* PHP_MSHUTDOWN - Module shutdown */
     PHP_RINIT(widigpio),        /* PHP_RINIT - Request initialization */
-    NULL,                        /* PHP_RSHUTDOWN - Request shutdown */
+    NULL,                       /* PHP_RSHUTDOWN - Request shutdown */
     PHP_MINFO(widigpio),        /* PHP_MINFO - Module info */
-    PHP_WIDIGPIO_VERSION,        /* Version */
+    "2.0.2",        			/* Version */
     STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
